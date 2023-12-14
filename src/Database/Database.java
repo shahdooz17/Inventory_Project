@@ -12,7 +12,7 @@ import java.util.Scanner;
 public class Database {
 
     private String fileName;
-    private final String dbLocation = "C:\\pos\\";
+    private final String dbLocation = "D:\\Inventory_Project\\src\\Files\\";
 
     public Database() throws Exception {
         this("temp");

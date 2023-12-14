@@ -28,6 +28,10 @@ public class Main {
                         continueInput = false;
                         Auth.login(true);
                     }
+                    case 3 -> {
+                        continueInput = false;
+                        Auth.signup();
+                    }
                     default -> throw new Exception("Invalid input");
                 }
             } catch (Exception e) {
