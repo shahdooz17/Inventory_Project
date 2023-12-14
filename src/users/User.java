@@ -26,7 +26,7 @@ public abstract class User implements InterFace {
     }
 
     public void setName(String name) throws InputMismatchException {
-        if(!name.matches("[a-zA-Z]+"))
+        if(!name.matches("^[a-zA-Z]+$"))
             throw new InputMismatchException("Invalid name");
         this.name = name;
     }

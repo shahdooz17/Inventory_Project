@@ -1,11 +1,14 @@
 package product;
 
-import java.io.FileWriter;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.UUID;
 import Database.InterFace;
 import Database.Database;
+import Admin.Category;
 import users.Admin;
 
 public class Product implements InterFace {
@@ -45,7 +48,7 @@ public class Product implements InterFace {
     }
 
     public void setName(String name) throws Exception {
-        if(!name.matches("[a-zA-Z]+"))
+        if(!name.matches("^[a-zA-Z]+$"))
             throw new Exception("Invalid name");
         this.name = name;
     }
@@ -54,7 +57,10 @@ public class Product implements InterFace {
         return this.category;
     }
 
-    public void setCategory(String category){
+    public void setCategory(String category) throws Exception {
+        if(category.isEmpty()) {
+            throw new Exception("invalid category");
+        }
         this.category = category;
     }
 
@@ -62,7 +68,10 @@ public class Product implements InterFace {
         return this.price;
     }
 
-    public void setPrice(double price){
+    public void setPrice(double price) throws Exception {
+        if(price < 0) {
+            throw new Exception("invalid price");
+        }
         this.price = price;
     }
 
@@ -70,11 +79,18 @@ public class Product implements InterFace {
         return this.productionDate;
     }
 
-    public void setProductionDate(String productionDate){
+    public void setProductionDate(String productionDate) throws Exception {
+        if(!productionDate.matches("^\\d{1,2}\\-\\d{1,2}\\-\\d{3,4}$")) {
+            throw new Exception("invalid Date");
+        }
         this.productionDate = productionDate;
     }
 
-    public String getExpirationDate() {
+    public String getExpirationDate() throws Exception {
+
+        if(!productionDate.matches("^\\d{1,2}\\-\\d{1,2}\\-\\d{3,4}$")) {
+            throw new Exception("invalid Date");
+        }
         return this.expirationDate;
     }
 
@@ -132,22 +148,82 @@ public class Product implements InterFace {
         return myProduct;
     }
     @Override
-    public boolean select() throws Exception {
-        Database myDB = new Database("products");
-        ArrayList<String> myData = myDB.readText();
-        for (int i = 0; i<myData.size(); i++) {
-            ArrayList<String> products = Database.decrypt(myData.get(i));
-            if(products.get(0).equals(this.id)) {
-                this.setID(products.get(0));
-                this.setName(products.get(1));
-                this.setCategory(products.get(2));
-                this.setPrice(Double.parseDouble(products.get(3)));
-                this.setProductionDate(products.get(4));
-                this.setExpirationDate(products.get(5));
-                this.setQuantity(Integer.parseInt(products.get(6)));
-                return true;
+    public Object select(String id) throws Exception {
+        ArrayList<Product> myData = this.getAll();
+        Product data = new Product();
+        for (Product oneData: myData) {
+            if(oneData.getID().equals(id)) {
+                data = oneData;
             }
         }
-        return false;
+        return data;
+    }
+
+    public ArrayList<Product> filter(String key, String value) throws Exception {
+        ArrayList<Product> myData = this.getAll();
+        ArrayList<Product> myReturnData = new ArrayList<>();
+        switch(key) {
+            case "name" -> {
+                for (Product oneData : myData) {
+                    if (oneData.getName().equals(value)) {
+                        myReturnData.add(oneData);
+                    }
+                }
+            }
+            case "production" -> {
+                for (Product oneData : myData) {
+                    if (oneData.getProductionDate().equals(value)) {
+                        myReturnData.add(oneData);
+                    }
+                }
+            }
+            case "expiration" -> {
+                for (Product oneData : myData) {
+                    if (oneData.getExpirationDate().equals(value)) {
+                        myReturnData.add(oneData);
+                    }
+                }
+            }
+            case "categories" -> {
+                for (Product oneData : myData) {
+                    Category myCat = new Category();
+                    myCat.select(oneData.getCategory());
+                    if (myCat.getName().equals(value)) {
+                        myReturnData.add(oneData);
+                    }
+                }
+            }
+        }
+        return myReturnData;
+    }
+    @Override
+    public ArrayList<Product> getAll() throws Exception {
+        ArrayList<Product> data = new ArrayList<>();
+        Database myDB = new Database("products");
+        ArrayList<String> allData = myDB.readText();
+        for (String oneData : allData) {
+            Product myData = new Product();
+            ArrayList<String> decryptedData = Database.decrypt(oneData);
+            myData.setID(decryptedData.get(0));
+            myData.setName(decryptedData.get(1));
+            myData.setCategory(decryptedData.get(2));
+            myData.setPrice(Double.parseDouble(decryptedData.get(3)));
+            myData.setProductionDate(decryptedData.get(4));
+            myData.setExpirationDate(decryptedData.get(5));
+            myData.setQuantity(Integer.parseInt(decryptedData.get(6)));
+            data.add(myData);
+        }
+        return data;
+    }
+    public boolean isNearExpiration(String daysBeforeExpiration) throws ParseException {
+        long currentTime = System.currentTimeMillis();
+        Date date1 = new SimpleDateFormat("dd-MM-yyyy").parse(daysBeforeExpiration);
+        long expirationTime = date1.getTime();
+        long difference = expirationTime - currentTime;
+        long daysDifference = difference / (1000 * 60 * 60 * 24);
+
+        // Adjust the condition to check if the daysDifference is less than or equal to the specified threshold
+        int daysThreshold = 7; // Change this value to your desired threshold
+        return daysDifference <= daysThreshold;
     }
 }

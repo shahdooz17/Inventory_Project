@@ -5,7 +5,7 @@ import Database.Database;
 import java.util.ArrayList;
 import java.util.UUID;
 
-public class Supplier extends User{
+public class Supplier extends User {
     private String username;
     private String password;
 
@@ -29,11 +29,17 @@ public class Supplier extends User{
         return this.password;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(String username) throws Exception {
+        if(username.isEmpty()) {
+            throw new Exception("invalid username");
+        }
         this.username = username;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(String password) throws Exception {
+        if(password.isEmpty()) {
+            throw new Exception("invalid password");
+        }
         this.password = password;
     }
 
@@ -67,21 +73,15 @@ public class Supplier extends User{
     }
 
     @Override
-    public boolean select() throws Exception {
-        Database myDB = new Database("suppliers");
-        ArrayList<String> myData = myDB.readText();
-        for (int i = 0; i<myData.size(); i++) {
-            ArrayList<String> users = Database.decrypt(myData.get(i));
-            if(users.get(3).equals(this.username)) {
-                super.setID(users.get(0));
-                super.setName(users.get(1));
-                super.setAge(Integer.parseInt(users.get(2)));
-                this.setUsername(users.get(3));
-                this.setPassword(users.get(4));
-                return true;
+    public Object select(String username) throws Exception {
+        ArrayList<Supplier> myData = this.getAll();
+        Supplier data = new Supplier();
+        for (Supplier supplier: myData) {
+            if(supplier.getUsername().equals(username)) {
+                data = supplier;
             }
         }
-        return false;
+        return data;
     }
     @Override
     public ArrayList<String> toArray() {
@@ -91,6 +91,23 @@ public class Supplier extends User{
         data.add(Integer.toString(super.getAge()));
         data.add(this.username);
         data.add(this.password);
+        return data;
+    }
+    @Override
+    public ArrayList<Supplier> getAll() throws Exception {
+        ArrayList<Supplier> data = new ArrayList<>();
+        Database myDB = new Database("suppliers");
+        ArrayList<String> suppliers = myDB.readText();
+        for (String admin : suppliers) {
+            Supplier mySupplier = new Supplier();
+            ArrayList<String> supplierData = Database.decrypt(admin);
+            mySupplier.setID(supplierData.get(0));
+            mySupplier.setName(supplierData.get(1));
+            mySupplier.setAge(Integer.parseInt(supplierData.get(2)));
+            mySupplier.setUsername(supplierData.get(3));
+            mySupplier.setPassword(supplierData.get(4));
+            data.add(mySupplier);
+        }
         return data;
     }
 }

@@ -3,22 +3,29 @@ package users;
 import Database.Database;
 
 import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.InputMismatchException;
 import java.util.UUID;
 
-public class Client extends User{
+public class Client extends User {
+
     private String username;
     private String password;
     private String email;
 
     // Constructor
     public Client() {
-        this("test", "test");
+        this("test", "test", "test@gmail.com");
     }
-    public Client(String username, String password) {
+    public Client(String username, String password, String email) {
         super.setID(UUID.randomUUID().toString());
         this.username = username;
         this.password = password;
+        this.email = email;
     }
+
+
+    // Getter methods
     public String getUsername() {
         return this.username;
     }
@@ -30,32 +37,42 @@ public class Client extends User{
         return this.email;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(String username) throws Exception {
+        if(username.isEmpty()) {
+            throw new Exception("invalid username");
+        }
         this.username = username;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(String password) throws Exception {
+        if(password.isEmpty()) {
+            throw new Exception("invalid password");
+        }
         this.password = password;
     }
-    public void setEmail(String password) {this.email=email;}
+    public void setEmail(String email) {
+        if(!email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$"))
+            throw new InputMismatchException("Invalid email");
+        this.email = email;
+    }
 
     @Override
     public void add() throws Exception {
-        String clientData = Database.encrypt(this.toArray());
+        // Implement the add method for admin
+        String data = Database.encrypt(this.toArray());
         Database myDB = new Database("clients");
-        myDB.appendText(clientData);
+        myDB.appendText(data);
     }
 
     @Override
     public void update(Object oldObj) throws Exception {
-        if(!(oldObj instanceof Admin oldClient)){
+        if(!(oldObj instanceof Client oldClient)){
             throw new Exception("Invalid Client");
         }
         Database myDB = new Database("clients");
-        String oldClientData = Database.encrypt(oldClient.toArray());
-        String clientData = Database.encrypt(this.toArray());
-        myDB.updateText(oldClientData, clientData);
-
+        String oldData = Database.encrypt(oldClient.toArray());
+        String data = Database.encrypt(this.toArray());
+        myDB.updateText(oldData, data);
     }
 
     @Override
@@ -64,28 +81,21 @@ public class Client extends User{
             throw new Exception("Invalid Client");
         }
         Database myDB = new Database("clients");
-        String oldClientData = Database.encrypt(oldClient.toArray());
-        myDB.removeText(oldClientData);
+        String oldData = Database.encrypt(oldClient.toArray());
+        myDB.removeText(oldData);
     }
 
     @Override
-    public boolean select() throws Exception {
-        Database myDB = new Database("clients");
-        ArrayList<String> myData = myDB.readText();
-        for (int i = 0; i<myData.size(); i++) {
-            ArrayList<String> users = Database.decrypt(myData.get(i));
-            if(users.get(3).equals(this.username)) {
-                super.setID(users.get(0));
-                super.setName(users.get(1));
-                super.setAge(Integer.parseInt(users.get(2)));
-                this.setUsername(users.get(3));
-                this.setPassword(users.get(4));
-                return true;
+    public Object select(String username) throws Exception {
+        ArrayList<Client> myData = this.getAll();
+        Client data = new Client();
+        for (Client client: myData) {
+            if(client.getUsername().equals(username)) {
+                data = client;
             }
         }
-        return false;
+        return data;
     }
-
     @Override
     public ArrayList<String> toArray() {
         ArrayList<String> data = new ArrayList<>();
@@ -94,6 +104,26 @@ public class Client extends User{
         data.add(Integer.toString(super.getAge()));
         data.add(this.username);
         data.add(this.password);
+        data.add(this.email);
+        return data;
+    }
+
+    @Override
+    public ArrayList<Client> getAll() throws Exception {
+        ArrayList<Client> data = new ArrayList<>();
+        Database myDB = new Database("clients");
+        ArrayList<String> clients = myDB.readText();
+        for (String client : clients) {
+            Client myClient = new Client();
+            ArrayList<String> adminData = Database.decrypt(client);
+            myClient.setID(adminData.get(0));
+            myClient.setName(adminData.get(1));
+            myClient.setAge(Integer.parseInt(adminData.get(2)));
+            myClient.setUsername(adminData.get(3));
+            myClient.setPassword(adminData.get(4));
+            myClient.setEmail(adminData.get(5));
+            data.add(myClient);
+        }
         return data;
     }
 }

@@ -3,8 +3,6 @@ package users;
 import Database.Database;
 
 import java.util.ArrayList;
-import java.util.Scanner;
-import java.util.InputMismatchException;
 import java.util.UUID;
 
 public class Admin extends User {
@@ -32,11 +30,17 @@ public class Admin extends User {
         return this.password;
     }
 
-    public void setUsername(String username) {
+    public void setUsername(String username) throws Exception {
+        if(username.isEmpty()) {
+            throw new Exception("invalid username");
+        }
         this.username = username;
     }
 
-    public void setPassword(String password) {
+    public void setPassword(String password) throws Exception {
+        if(password.isEmpty()) {
+            throw new Exception("invalid password");
+        }
         this.password = password;
     }
 
@@ -70,21 +74,15 @@ public class Admin extends User {
     }
 
     @Override
-    public boolean select() throws Exception {
-        Database myDB = new Database("admins");
-        ArrayList<String> myData = myDB.readText();
-        for (int i = 0; i<myData.size(); i++) {
-            ArrayList<String> users = Database.decrypt(myData.get(i));
-            if(users.get(3).equals(this.username)) {
-                super.setID(users.get(0));
-                super.setName(users.get(1));
-                super.setAge(Integer.parseInt(users.get(2)));
-                this.setUsername(users.get(3));
-                this.setPassword(users.get(4));
-                return true;
+    public Object select(String username) throws Exception {
+        ArrayList<Admin> myData = this.getAll();
+        Admin data = new Admin();
+        for (Admin admin: myData) {
+            if(admin.getUsername().equals(username)) {
+                data = admin;
             }
         }
-        return false;
+        return data;
     }
     @Override
     public ArrayList<String> toArray() {
@@ -94,6 +92,23 @@ public class Admin extends User {
         data.add(Integer.toString(super.getAge()));
         data.add(this.username);
         data.add(this.password);
+        return data;
+    }
+    @Override
+    public ArrayList<Admin> getAll() throws Exception {
+        ArrayList<Admin> data = new ArrayList<>();
+        Database myDB = new Database("admins");
+        ArrayList<String> admins = myDB.readText();
+        for (String admin : admins) {
+            Admin myAdmin = new Admin();
+            ArrayList<String> adminData = Database.decrypt(admin);
+            myAdmin.setID(adminData.get(0));
+            myAdmin.setName(adminData.get(1));
+            myAdmin.setAge(Integer.parseInt(adminData.get(2)));
+            myAdmin.setUsername(adminData.get(3));
+            myAdmin.setPassword(adminData.get(4));
+            data.add(myAdmin);
+        }
         return data;
     }
 }

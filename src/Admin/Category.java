@@ -2,87 +2,108 @@ package Admin;
 
 import Database.Database;
 import Database.InterFace;
+import product.Product;
 import users.Admin;
 import users.User;
 
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.UUID;
 
-public class Category extends User {
+public class Category implements InterFace {
 
 
     private String name;
+    private String id;
+    public String getID() {
+        return this.id;
+    }
+    public void setID(String id) {
+        this.id = id;
+    }
 
     // Constructor
     public Category() {
         this("test");
     }
-    public Category(String username) {
-        super.setID(UUID.randomUUID().toString());
-        this.name = username;
+    public Category(String name) {
+        this.setID(UUID.randomUUID().toString());
+        this.name = name;
     }
 
 
     // Getter methods
-    public String getUsername() {
+    public String getName() {
         return this.name;
     }
 
-
-
-    public void setname(String username) {
+    public void setName(String name) throws InputMismatchException {
+        if(!name.matches("^[a-zA-Z]+$"))
+            throw new InputMismatchException("Invalid name");
         this.name = name;
     }
 
 
     @Override
     public void add() throws Exception {
-        String Data = Database.encrypt(this.toArray());
-        Database myDB = new Database("categories");
-        myDB.appendText(Data);
+        String catData = Database.encrypt(this.toArray());
+        Database myDB = new Database("category");
+        myDB.appendText(catData);
+
     }
 
     @Override
     public void update(Object oldObj) throws Exception {
-        if(!(oldObj instanceof Category oldCat)){
-            throw new Exception("Invalid Admin");
+        if(!(oldObj instanceof Category oldCategory)){
+            throw new Exception("Invalid Category");
         }
-        Database myDB = new Database("admins");
-        String oldCatData = Database.encrypt(oldCat.toArray());
-        String CatData = Database.encrypt(this.toArray());
-        myDB.updateText(oldCatData, CatData);
+        Database myDB = new Database("category");
+        String oldCategoryData = Database.encrypt(oldCategory.toArray());
+        String CategoryData = Database.encrypt(this.toArray());
+        myDB.updateText(oldCategoryData, CategoryData);
     }
 
     @Override
     public void delete(Object oldObj) throws Exception {
-        if(!(oldObj instanceof Category oldCat)){
+        if(!(oldObj instanceof Category oldCategory)){
             throw new Exception("Invalid Category");
         }
-        Database myDB = new Database("categories");
-        String oldCatData = Database.encrypt(oldCat.toArray());
-        myDB.removeText(oldCatData);
-    }
-
-    @Override
-    public boolean select() throws Exception {
-        Database myDB = new Database("categories");
-        ArrayList<String> myData = myDB.readText();
-        for (int i = 0; i<myData.size(); i++) {
-            ArrayList<String> users = Database.decrypt(myData.get(i));
-            if(users.get(3).equals(this.name)) {
-                super.setID(users.get(0));
-                super.setName(users.get(1));
-                return true;
-            }
-        }
-        return false;
+        Database myDB = new Database("category");
+        String oldCategoryData = Database.encrypt(oldCategory.toArray());
+        myDB.removeText(oldCategoryData);
     }
 
     @Override
     public ArrayList<String> toArray() {
-        ArrayList<String> data = new ArrayList<>();
-        data.add(super.getID());
-        data.add(super.getName());
+        ArrayList<String> myCategory = new ArrayList<>();
+        myCategory.add(this.id);
+        myCategory.add(this.name);
+        return myCategory;
+    }
+    @Override
+    public Object select(String id) throws Exception {
+        ArrayList<Category> myData = this.getAll();
+        Category data = new Category();
+        for (Category oneData: myData) {
+            if(oneData.getID().equals(id)) {
+                data = oneData;
+            }
+        }
+        return data;
+    }
+
+    @Override
+    public ArrayList<Category> getAll() throws Exception {
+        ArrayList<Category> data = new ArrayList<>();
+        Database myDB = new Database("category");
+        ArrayList<String> allData = myDB.readText();
+        for (String oneData : allData) {
+            Category myData = new Category();
+            ArrayList<String> decryptedData = Database.decrypt(oneData);
+            myData.setID(decryptedData.get(0));
+            myData.setName(decryptedData.get(1));
+            data.add(myData);
+        }
         return data;
     }
 }

@@ -1,16 +1,17 @@
+package Main;
+
 import java.util.Scanner;
 import product.*;
+import Admin.CategoryMenu;
+import users.Auth;
 
 public class Main {
     public static void main(String[] args) {
         System.out.println("Welcome to The supermarket please choose Your option");
 
-        System.out.println("(1) Product menu");
-        System.out.println("(2) Client menu");
-        System.out.println("(3) Supplier menu");
-        System.out.println("(4) Admin menu");
-        System.out.println("(5) Orders menu");
-        System.out.println("(6) Offers menu");
+        System.out.println("(1) Login Client");
+        System.out.println("(2) Login Admin");
+        System.out.println("(3) Sign up");
 
 
         boolean continueInput = true;
@@ -21,11 +22,11 @@ public class Main {
                 switch (option) {
                     case 1 -> {
                         continueInput = false;
-                        product.ProductMenu.productMenu();
+                        Auth.login(false);
                     }
-                    case 4 -> {
+                    case 2 -> {
                         continueInput = false;
-                        users.AdminMenu.displayMenu();
+                        Auth.login(true);
                     }
                     default -> throw new Exception("Invalid input");
                 }

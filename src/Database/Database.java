@@ -12,7 +12,7 @@ import java.util.Scanner;
 public class Database {
 
     private String fileName;
-    private final String dbLocation = "C:\\Users\\Dell\\Downloads\\Inventory_project\\src\\Files\\";
+    private final String dbLocation = "C:\\pos\\";
 
     public Database() throws Exception {
         this("temp");
@@ -20,6 +20,14 @@ public class Database {
 
     public Database(String fileName) throws Exception {
         this.fileName = fileName;
+    }
+
+    public boolean writeFile(String text) throws Exception {
+        try (FileWriter writeFile = new FileWriter(dbLocation + fileName+ ".txt")) {
+            writeFile.write(text);
+            writeFile.close();
+            return true;
+        }
     }
 
     public void appendText(String text) throws Exception {
